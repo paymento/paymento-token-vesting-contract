@@ -1,2 +1,1 @@
-# paymento-token-vesting-contract
-Paymento Token And Vesting Contract 
+# Paymento Token And Vesting Contract 
