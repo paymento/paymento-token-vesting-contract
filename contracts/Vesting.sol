@@ -48,12 +48,13 @@ contract VestingContract is Ownable {
 
     mapping(uint256 => VestingStageModel) public vestingStages;
     mapping(uint256 => mapping(address => bool)) public whitelistedAddresses;
-    mapping(address => mapping(string => uint256)) public claimedTokensPerStage;
-    mapping(address => mapping(string => uint256)) public purchasedTokensPerStage;
-    mapping(address => mapping(string => uint256)) public purchaseTimestampsPerStage;
+    mapping(uint256 => uint256) public totalTokenPurchasedPerStage;
+    mapping(uint256 => mapping(address => uint256)) public userPurchasedTokensPerStage;
+    mapping(uint256 => mapping(address => uint256)) public userPurchaseTimePerStage;
+
+    mapping(uint256 => mapping(string => uint256)) public claimedTokensPerStage;
     mapping(uint256 => uint256) public totalAllocated;
     mapping(uint256 => bool) public stageOpen;
-    mapping(uint256 => bool) public stageSetOnce;
     mapping(uint256 => bool) public stageAllocationComplete;
 
     constructor(IERC20 _token, AggregatorV3Interface _ethUsdPriceFeed) Ownable(msg.sender) {
@@ -171,18 +172,31 @@ contract VestingContract is Ownable {
         });
     }
 
+    /**
+    * @dev Open a stage by Owner
+    * @param stage uint256 The stage to open
+    */
     function setStageOpen(uint stage) external onlyOwner {
         require(stage < uint256(Stages.GeoExpansionReserves), "Invalid stage");
 
         stageOpen[stage] = true;
     }
 
+    /**
+    * @dev Close a stage by Owner
+    * @param stage uint256 The stage to close
+    */
     function setStageClose(uint stage) external onlyOwner {
         require(stage < uint256(Stages.GeoExpansionReserves), "Invalid stage");
 
         stageOpen[stage] = false;
     }
 
+    /**
+    * @dev Register an address in whitelist of Private Sale 1 and Private Sale 2
+    * @param stage uint256 The stage to close
+    * @param user address The address to register
+    */
     function addToWhitelist(uint stage, address user) external onlyOwner {
         require(stage == (uint)(Stages.PrivateSale1) || stage == (uint)(Stages.PrivateSale2),
             "Only Private Sale 1 and Private Sale 2 can have a whitelist"
@@ -191,6 +205,11 @@ contract VestingContract is Ownable {
         whitelistedAddresses[stage][user] = true;
     }
 
+    /**
+    * @dev Remove an address from whitelist of Private Sale 1 and Private Sale 2
+    * @param stage uint256 The stage to close
+    * @param user address The address to remove
+    */
     function removeFromWhitelist(uint stage, address user) external onlyOwner {
         require(stage == (uint)(Stages.PrivateSale1) || stage == (uint)(Stages.PrivateSale2),
             "Only Private Sale 1 and Private Sale 2 can have a whitelist"
@@ -199,14 +218,97 @@ contract VestingContract is Ownable {
         whitelistedAddresses[stage][user] = false;
     }
 
+    /**
+    * @dev Get the latest ETH/USD price from Chainlink
+    * @return uint256 The latest ETH/USD price
+    */
     function getLatestEthUsdPrice() public view returns (uint256) {
         (, int256 price, , , ) = ethUsdPriceFeed.latestRoundData();
         return uint256(price);
     }
 
-    function buy(uint stage) external payable {
-
+    /**
+    * @dev Get the total token count for a stage
+    * @param stage uint256 The stage to get the total token count
+    */
+    function getTotalTokenForStage(uint stage) public view returns (uint256) {
+        return vestingStages[stage].tokenCount;
     }
+
+    /**
+    * @dev Get tokens available to buy for a stage
+    * @param stage uint256 The stage to get the tokens available to buy
+    */
+    function getTokensAvailableToBuy(uint stage) public view returns (uint256) {
+        require(stage < uint256(Stages.GeoExpansionReserves), "Invalid stage");
+
+        return vestingStages[stage].tokenCount - totalTokenPurchasedPerStage[stage];
+    }
+
+    /**
+    * @dev Users can buy the tokens from the contract
+    * @dev To buy the tokens, in stage Private Sale 1 and 2 the user must be whitelisted
+    * @dev The amount of tokens to buy is calculated by dividing the amount of ETH/USDT sent by the price of the stage
+    * @param stage uint256 The stage to buy
+    */
+    function buy(uint stage) external payable {
+        require(stage < uint256(Stages.GeoExpansionReserves), "Invalid stage");
+
+        // Check if the stage is open
+        require(stageOpen[stage], "Stage is not open");
+
+        // Check if stage is Private Sale 1 or Private Sale 2 and if the user is whitelisted
+        if(stage == (uint)(Stages.PrivateSale1) || stage == (uint)(Stages.PrivateSale2)) {
+            require(whitelistedAddresses[stage][msg.sender], "User is not whitelisted");
+        }
+
+        // Get the current price of ETH/USDT
+        // This api returns price in 8 decimals, for example 100000000 equals to US$1 or 228581475150 equals to US$2285.81475150
+        // So we divide the price by 10 ** 5 to get the price in 3 decimals as our token price is in 3 decimals
+        uint256 ethUsdPrice = getLatestEthUsdPrice() / 10 ** 5;
+
+        // Calculate the value of ETH sent in USDT
+        uint256 ethUsdValue = msg.value * ethUsdPrice;
+
+        // Calculate the amount of tokens to buy
+        uint256 tokensToBuy = (ethUsdValue / vestingStages[stage].price) * 10 ** 18;
+
+        // Check if this amount of tokens is available to buy
+        require(totalTokenPurchasedPerStage[stage] + tokensToBuy <= vestingStages[stage].tokenCount, "Not enough tokens available");
+
+        // Update the total tokens purchased
+        totalTokenPurchasedPerStage[stage] += tokensToBuy;
+
+        // Update user balance
+        userPurchasedTokensPerStage[stage][msg.sender] += tokensToBuy;
+
+        // Update user purchase time if it is the first purchase
+        if(userPurchaseTimePerStage[stage][msg.sender] == 0) {
+            userPurchaseTimePerStage[stage][msg.sender] = block.timestamp;
+        }
+    }
+
+    /**
+    * @dev Check user balance for a stage
+    * @param stage uint256 The stage to check the balance
+    * @param user address The address to check the balance
+    */
+    function checkBalance(uint stage, address user) external view returns (uint256) {
+        require(stage < uint256(Stages.GeoExpansionReserves), "Invalid stage");
+
+        return userPurchasedTokensPerStage[stage][user];
+    }
+
+    function claimTokens(uint stage) external {
+        require(stage < uint256(Stages.GeoExpansionReserves), "Invalid stage");
+
+        // check if user has purchased tokens
+        require(userPurchasedTokensPerStage[stage][msg.sender] > 0, "User has not purchased tokens");
+
+        
+    }
+
+
 
     modifier onlyTokenContract() {
         require(msg.sender == owner(), "Caller is not the owner");
