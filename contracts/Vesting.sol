@@ -30,7 +30,7 @@ contract VestingContract is Ownable {
         uint256 tokenCount; // Number of tokens to be vested
         uint256 price; // Price of the token
         uint256 immadiateTokenReleasePercentage; // Percentage of tokens to be released immadiately
-        uint256 vestingMonths; // Number of months for vesting
+        uint256 vestingDays; // Number of months for vesting
     }
 
     IERC20 public token;
@@ -55,7 +55,7 @@ contract VestingContract is Ownable {
             tokenCount: 17500000 * 10 ** 18,
             price: 75,
             immadiateTokenReleasePercentage: 5,
-            vestingMonths: 24
+            vestingDays: 720 // 24 months
         });
         
         // Seed
@@ -63,7 +63,7 @@ contract VestingContract is Ownable {
             tokenCount: 24500000 * 10 ** 18,
             price: 120,
             immadiateTokenReleasePercentage: 5,
-            vestingMonths: 20
+            vestingDays: 600 // 20 months
         });
 
         // Private Sale 1
@@ -71,7 +71,7 @@ contract VestingContract is Ownable {
             tokenCount: 28000000 * 10 ** 18,
             price: 180,
             immadiateTokenReleasePercentage: 8,
-            vestingMonths: 16
+            vestingDays: 480 // 16 months
         });
 
         // Private Sale 2
@@ -79,7 +79,7 @@ contract VestingContract is Ownable {
             tokenCount: 7000000 * 10 ** 18,
             price: 250,
             immadiateTokenReleasePercentage: 8,
-            vestingMonths: 12
+            vestingDays: 360 // 12 months
         });
         
         // Community
@@ -87,7 +87,7 @@ contract VestingContract is Ownable {
             tokenCount: 49000000 * 10 ** 18,
             price: 0,
             immadiateTokenReleasePercentage: 10,
-            vestingMonths: 36
+            vestingDays: 1080 // 36 months
         });
 
         // Partnership
@@ -95,7 +95,7 @@ contract VestingContract is Ownable {
             tokenCount: 28000000 * 10 ** 18,
             price: 0,
             immadiateTokenReleasePercentage: 10,
-            vestingMonths: 36
+            vestingDays: 1080 // 36 months
         });
 
         // Advisors
@@ -103,7 +103,7 @@ contract VestingContract is Ownable {
             tokenCount: 10500000 * 10 ** 18,
             price: 0,
             immadiateTokenReleasePercentage: 10,
-            vestingMonths: 20
+            vestingDays: 600 // 20 months
         });
 
         // Development And Team
@@ -111,7 +111,7 @@ contract VestingContract is Ownable {
             tokenCount: 70000000 * 10 ** 18,
             price: 0,
             immadiateTokenReleasePercentage: 10,
-            vestingMonths: 24
+            vestingDays: 720 // 24 months
         });
 
         // Geo Expansion Reserves
@@ -119,7 +119,7 @@ contract VestingContract is Ownable {
             tokenCount: 52500000 * 10 ** 18,
             price: 0,
             immadiateTokenReleasePercentage: 10,
-            vestingMonths: 60
+            vestingDays: 1800 // 60 months
         });
     }
 
@@ -285,22 +285,27 @@ contract VestingContract is Ownable {
         require(userBalancePerStage[stage][msg.sender] > 0, "User has no balance");
 
         // calculate days since last claim
-        uint256 daysSinceLastClaim = (block.timestamp - userLastClaimTimePerStage[stage][msg.sender]) / 86400;
+        uint256 daysSinceLastClaim = getDaysPassedFromLastestClaim(stage, msg.sender);
 
         // Check if at least 1 day has passed since last claim
         require(daysSinceLastClaim > 0, "At least 1 day must pass since last claim");
 
-        // Calculate the number of tokens to release
-        if(daysSinceLastClaim >= vestingStages[stage].vestingMonths * 30) {
-            // If all the vesting period has passed then release all the tokens
-            userBalancePerStage[stage][msg.sender] = 0;
-            token.transfer(msg.sender, userBalancePerStage[stage][msg.sender]);
-            return;
-        }
+        uint256 tokensToRelease = 0;
 
-        // For example if the user has balance of 1000 tokens in Private Sale 1 and 10 days has passed since last claim
-        // Then the user can claim 1000 * 10 / (16 * 30) = 20 tokens
-        uint256 tokensToRelease = (userBalancePerStage[stage][msg.sender] * daysSinceLastClaim) / (vestingStages[stage].vestingMonths * 30);
+        // Calculate the number of tokens to release
+        if(daysSinceLastClaim >= vestingStages[stage].vestingDays) {
+            // If all the vesting period has passed then release all the tokens
+            tokensToRelease = userBalancePerStage[stage][msg.sender];
+        }
+        else {
+            // For example if the user has balance of 1000 tokens in Private Sale 1 and 10 days has passed since last claim
+            // Then the user can claim 1000 * 10 / 480 = 20 tokens
+            tokensToRelease = (userBalancePerStage[stage][msg.sender] * daysSinceLastClaim) / vestingStages[stage].vestingDays;
+
+            if(tokensToRelease > userBalancePerStage[stage][msg.sender]) {
+                tokensToRelease = userBalancePerStage[stage][msg.sender];
+            }
+        }
 
         // Update user balance
         userBalancePerStage[stage][msg.sender] -= tokensToRelease;
@@ -311,8 +316,6 @@ contract VestingContract is Ownable {
         // Transfer the tokens to the user
         token.transfer(msg.sender, tokensToRelease);
     }
-
-
 
     /**
     * @dev Check user balance for a stage
@@ -325,10 +328,76 @@ contract VestingContract is Ownable {
         return userBalancePerStage[stage][user];
     }
 
-    
-    modifier onlyTokenContract() {
-        require(msg.sender == owner(), "Caller is not the owner");
-        _;
+    /**
+    * @dev Check user claimable tokens for a stage
+    * @param stage uint256 The stage to check the claimable tokens
+    * @param user address The address to check the claimable tokens
+    */
+    function checkClaimableTokens(uint stage, address user) external view returns (uint256) {
+        require(stage < uint256(Stages.GeoExpansionReserves), "Invalid stage");
+
+        // check if user has balance
+        if(userBalancePerStage[stage][user] == 0) {
+            return 0;
+        }
+
+        // calculate days since last claim
+        uint256 daysSinceLastClaim = getDaysPassedFromLastestClaim(stage, user);
+
+        // Check if at least 1 day has passed since last claim
+        if(daysSinceLastClaim == 0) {
+            return 0;
+        }
+
+        // Calculate the number of tokens to release
+        if(daysSinceLastClaim >= vestingStages[stage].vestingDays) {
+            // If all the vesting period has passed then release all the tokens
+            return userBalancePerStage[stage][user];
+        }
+
+        // For example if the user has balance of 1000 tokens in Private Sale 1 and 10 days has passed since last claim
+        // Then the user can claim 1000 * 10 / (16 * 30) = 20 tokens
+        uint256 tokensToRelease = (userBalancePerStage[stage][user] * daysSinceLastClaim) / vestingStages[stage].vestingDays;
+
+        return tokensToRelease;
+    }
+
+    /**
+    * @dev Check days passed from lastest claim for a stage
+    * @param stage uint256 The stage to check the days passed from lastest claim
+    * @param user address The address to check the days passed from lastest claim
+    */
+    function getDaysPassedFromLastestClaim(uint stage, address user) public view returns (uint256){
+        require(stage < uint256(Stages.GeoExpansionReserves), "Invalid stage");
+
+        // calculate days since last claim
+        return (block.timestamp - userLastClaimTimePerStage[stage][user]) / 86400;
+    }
+
+    /**
+    * @dev Withdraw ETH from the contract
+    * @param amount uint256 The amount of ETH to withdraw
+    */
+    function withdrawEth(uint256 amount) external onlyOwner {
+        require(address(this).balance >= amount, "Not enough ETH in the contract");
+
+        payable(owner()).transfer(amount);
+    }
+
+    /**
+    * @dev Withdraw unsold tokens from the contract for a stage
+    * @param stage uint256 The stage to withdraw the tokens
+    */
+    function withdrawUnsoldTokens(uint stage) external onlyOwner {
+        require(stage < uint256(Stages.GeoExpansionReserves), "Invalid stage");
+
+        require(stageOpen[stage] == true, "Stage is still open");
+
+        uint256 amount = getTokensAvailableToBuy(stage);
+
+        require(amount > 0, "No tokens to withdraw");
+
+        token.transfer(owner(), amount);
     }
 
 }
