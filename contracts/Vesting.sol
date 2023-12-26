@@ -312,6 +312,8 @@ contract VestingContract is Ownable {
         token.transfer(msg.sender, tokensToRelease);
     }
 
+
+
     /**
     * @dev Check user balance for a stage
     * @param stage uint256 The stage to check the balance
