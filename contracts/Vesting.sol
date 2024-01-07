@@ -128,7 +128,7 @@ contract VestingContract is Ownable {
     * @param stage uint256 The stage to open
     */
     function setStageOpen(uint stage) external onlyOwner {
-        require(stage < uint256(Stages.GeoExpansionReserves), "Invalid stage");
+        require(stage <= uint256(Stages.GeoExpansionReserves), "Invalid stage");
 
         stageOpen[stage] = true;
     }
@@ -138,7 +138,7 @@ contract VestingContract is Ownable {
     * @param stage uint256 The stage to close
     */
     function setStageClose(uint stage) external onlyOwner {
-        require(stage < uint256(Stages.GeoExpansionReserves), "Invalid stage");
+        require(stage <= uint256(Stages.GeoExpansionReserves), "Invalid stage");
 
         stageOpen[stage] = false;
     }
@@ -191,7 +191,7 @@ contract VestingContract is Ownable {
     * @param stage uint256 The stage to get the tokens available to buy
     */
     function getTokensAvailableToBuy(uint stage) public view returns (uint256) {
-        require(stage < uint256(Stages.GeoExpansionReserves), "Invalid stage");
+        require(stage <= uint256(Stages.GeoExpansionReserves), "Invalid stage");
 
         return vestingStages[stage].tokenCount - totalTokenPurchasedOrAllocatedPerStage[stage];
     }
@@ -253,7 +253,7 @@ contract VestingContract is Ownable {
     */
     function allocateTokens(uint stage, address user, uint256 amount) external onlyOwner {
         // Check if stage can be allocated
-        require(stage > uint256(Stages.PrivateSale2) && stage < uint256(Stages.GeoExpansionReserves), "Invalid stage");
+        require(stage > uint256(Stages.PrivateSale2) && stage <= uint256(Stages.GeoExpansionReserves), "Invalid stage");
 
         require(amount <= getTokensAvailableToBuy(stage), "Not enough tokens available");
 
@@ -279,7 +279,7 @@ contract VestingContract is Ownable {
     * @param stage uint256 The stage to claim the tokens
     */
     function claimTokens(uint stage) external {
-        require(stage < uint256(Stages.GeoExpansionReserves), "Invalid stage");
+        require(stage <= uint256(Stages.GeoExpansionReserves), "Invalid stage");
 
         // check if user has balance
         require(userBalancePerStage[stage][msg.sender] > 0, "User has no balance");
@@ -323,7 +323,7 @@ contract VestingContract is Ownable {
     * @param user address The address to check the balance
     */
     function checkBalance(uint stage, address user) external view returns (uint256) {
-        require(stage < uint256(Stages.GeoExpansionReserves), "Invalid stage");
+        require(stage <= uint256(Stages.GeoExpansionReserves), "Invalid stage");
 
         return userBalancePerStage[stage][user];
     }
@@ -334,7 +334,7 @@ contract VestingContract is Ownable {
     * @param user address The address to check the claimable tokens
     */
     function checkClaimableTokens(uint stage, address user) external view returns (uint256) {
-        require(stage < uint256(Stages.GeoExpansionReserves), "Invalid stage");
+        require(stage <= uint256(Stages.GeoExpansionReserves), "Invalid stage");
 
         // check if user has balance
         if(userBalancePerStage[stage][user] == 0) {
@@ -368,7 +368,7 @@ contract VestingContract is Ownable {
     * @param user address The address to check the days passed from lastest claim
     */
     function getDaysPassedFromLastestClaim(uint stage, address user) public view returns (uint256){
-        require(stage < uint256(Stages.GeoExpansionReserves), "Invalid stage");
+        require(stage <= uint256(Stages.GeoExpansionReserves), "Invalid stage");
 
         // calculate days since last claim
         return (block.timestamp - userLastClaimTimePerStage[stage][user]) / 86400;
@@ -389,7 +389,7 @@ contract VestingContract is Ownable {
     * @param stage uint256 The stage to withdraw the tokens
     */
     function withdrawUnsoldTokens(uint stage) external onlyOwner {
-        require(stage < uint256(Stages.GeoExpansionReserves), "Invalid stage");
+        require(stage <= uint256(Stages.GeoExpansionReserves), "Invalid stage");
 
         require(stageOpen[stage] == true, "Stage is still open");
 
