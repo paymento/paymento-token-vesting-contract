@@ -223,7 +223,7 @@ contract VestingContract is Ownable {
         uint256 ethUsdValue = msg.value * ethUsdPrice;
 
         // Calculate the amount of tokens to buy
-        uint256 tokensToBuy = (ethUsdValue / vestingStages[stage].price) * 10 ** 18;
+        uint256 tokensToBuy = (ethUsdValue / vestingStages[stage].price);
 
         // Check if this amount of tokens is available to buy
         require(totalTokenPurchasedOrAllocatedPerStage[stage] + tokensToBuy <= vestingStages[stage].tokenCount, "Not enough tokens available");
@@ -242,7 +242,7 @@ contract VestingContract is Ownable {
             userLastClaimTimePerStage[stage][msg.sender] = block.timestamp;
         }
 
-        token.transfer(msg.sender, immadiateTokenRelease);
+        //token.transfer(msg.sender, immadiateTokenRelease);
     }
 
     /**

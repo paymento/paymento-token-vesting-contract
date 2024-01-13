@@ -1,13 +1,27 @@
 const vesting = artifacts.require('MockedVesting');
+const paymento = artifacts.require('Paymento'); 
 const helper = require("../helpers/truffleTestHelper");
 
 // test deploy
 contract('MockedVesting', async () => {
     
-    // deploy the vesting contract in test setup
+    
+    // deploy token and vesting contract in test setup
     let vestingContract;
+    let pmo;
+    let testAccount1;
+    
     before(async () => {
-        vestingContract = await vesting.new('0x8514F908eE2B47a7f83c60A564d2Acf8f3F0baEC', '0x8514F908eE2B47a7f83c60A564d2Acf8f3F0baEC');
+        // deploy the Paymento token contract
+        pmo = await paymento.new();
+
+        vestingContract = await vesting.new(pmo.address, '0x8514F908eE2B47a7f83c60A564d2Acf8f3F0baEC');
+
+        // transfer 1M tokens to vesting contract
+        //await pmo.transfer(vestingContract.address, 1000000 * 10 ** 18);
+
+        // get ganache account 1
+        testAccount1 = (await web3.eth.getAccounts())[1];
     });
 
     // test if vesting stage 0 is correctly set
@@ -165,4 +179,31 @@ contract('MockedVesting', async () => {
     });
     //#endregion
     
+    //#region Test buy function
+    // first check if stage 2 is open, if not open it
+    it('Buy tokens, Test 1', async () => {
+        // check if stage 2 is not open, open it
+        if (!await vestingContract.stageOpen(2)) {
+            await vestingContract.setStageOpen(2);
+        }
+
+        // add address to whitelist
+        await vestingContract.addToWhitelist(2, testAccount1);
+
+        // mock the ETH price to $1800(1 ETH = 1800 USDT)
+        await vestingContract.setLatestEthUsdPrice(1800.00 * 10 ** 8);
+
+        // buy 1 ETH worth of tokens
+        await vestingContract.buy(2, {from: testAccount1, value: 1 * 10 ** 18});
+
+        // in stage 2, 1 token = 0.18 USDT, so 1 ETH = 1800 USDT, so 1800 / 0.18 = 10000 tokens
+        // immadiage token transfer is 8% of 10000 = 800 tokens that user will get immadiately
+
+        // Cheking buyer's token balance
+        const balance = await vestingContract.checkBalance(2, testAccount1);
+
+        assert.equal(balance, (10000-800) * 10 ** 18);
+    });
+
+    //#endregion
 });
