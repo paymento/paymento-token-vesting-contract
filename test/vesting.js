@@ -4,24 +4,32 @@ const helper = require("../helpers/truffleTestHelper");
 
 // test deploy
 contract('MockedVesting', async () => {
-    
-    
     // deploy token and vesting contract in test setup
     let vestingContract;
     let pmo;
     let testAccount1;
     
     before(async () => {
-        // deploy the Paymento token contract
         pmo = await paymento.new();
+        console.log('PMO token address: ', pmo.address);
 
+        // deploy the vesting contract
         vestingContract = await vesting.new(pmo.address, '0x8514F908eE2B47a7f83c60A564d2Acf8f3F0baEC');
 
-        // transfer 1M tokens to vesting contract
-        //await pmo.transfer(vestingContract.address, 1000000 * 10 ** 18);
+        console.log('vesting contract address: ', vestingContract.address);
 
         // get ganache account 1
         testAccount1 = (await web3.eth.getAccounts())[1];
+    });
+
+    it('Transfer 1M to vesting contract', async () => {
+
+        // transfer 1M tokens to vesting contract
+        await pmo.transfer(vestingContract.address, 1000000);
+
+        // check if vesting contract has 1M tokens
+        const balance = await pmo.balanceOf(vestingContract.address);
+        assert.equal(balance, 1000000);
     });
 
     // test if vesting stage 0 is correctly set
