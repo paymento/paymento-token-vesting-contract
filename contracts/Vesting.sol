@@ -173,7 +173,7 @@ contract VestingContract is Ownable {
     * @dev Get the latest ETH/USD price from Chainlink
     * @return uint256 The latest ETH/USD price
     */
-    function getLatestEthUsdPrice() public view returns (uint256) {
+    function getLatestEthUsdPrice() public virtual view returns (uint256) {
         (, int256 price, , , ) = ethUsdPriceFeed.latestRoundData();
         return uint256(price);
     }
