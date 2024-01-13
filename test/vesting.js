@@ -1,8 +1,8 @@
-const vesting = artifacts.require('VestingContract');
+const vesting = artifacts.require('MockedVesting');
 const helper = require("../helpers/truffleTestHelper");
 
 // test deploy
-contract('VestingContract', async () => {
+contract('MockedVesting', async () => {
     
     // deploy the vesting contract in test setup
     let vestingContract;
@@ -151,5 +151,18 @@ contract('VestingContract', async () => {
     });
     //#endregion
 
+    //#region Test ETH/USDT Price
+    // test if ETH/USDT price is eual to 200000000000
+    it('Check ETH/USDT price', async () => {
+        assert.equal(await vestingContract.getLatestEthUsdPrice(), 200000000000);
+    });
+
+    // Change the price and test the value again
+    it('Change ETH/USDT price', async () => {
+        await vestingContract.setLatestEthUsdPrice(100000000000);
+
+        assert.equal(await vestingContract.getLatestEthUsdPrice(), 100000000000);
+    });
+    //#endregion
     
 });
