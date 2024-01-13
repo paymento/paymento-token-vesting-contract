@@ -25,11 +25,11 @@ contract('MockedVesting', async () => {
     it('Transfer 1M to vesting contract', async () => {
 
         // transfer 1M tokens to vesting contract
-        await pmo.transfer(vestingContract.address, 1000000);
+        await pmo.transfer(vestingContract.address, BigInt(1000000 * 10 ** 18));
 
         // check if vesting contract has 1M tokens
         const balance = await pmo.balanceOf(vestingContract.address);
-        assert.equal(balance, 1000000);
+        assert.equal(balance, 1000000 * 10 ** 18);
     });
 
     // test if vesting stage 0 is correctly set
@@ -211,6 +211,10 @@ contract('MockedVesting', async () => {
         const balance = await vestingContract.checkBalance(2, testAccount1);
 
         assert.equal(balance, (10000-800) * 10 ** 18);
+
+        // check if buyer received 800 tokens
+        const buyerTokenBalance = await pmo.balanceOf(testAccount1);
+        assert.equal(buyerTokenBalance, 800 * 10 ** 18);
     });
 
     //#endregion
