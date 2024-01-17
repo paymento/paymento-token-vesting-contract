@@ -10,13 +10,13 @@ contract('MockedVesting', async () => {
     let testAccount1;
     
     before(async () => {
-        pmo = await paymento.new();
-        console.log('PMO token address: ', pmo.address);
+        
+    });
 
+    beforeEach(async () => {
+        pmo = await paymento.new();
         // deploy the vesting contract
         vestingContract = await vesting.new(pmo.address, '0x8514F908eE2B47a7f83c60A564d2Acf8f3F0baEC');
-
-        console.log('vesting contract address: ', vestingContract.address);
 
         // get ganache account 1
         testAccount1 = (await web3.eth.getAccounts())[1];
@@ -132,18 +132,16 @@ contract('MockedVesting', async () => {
         }
     });
 
-    // Check if address is whitelisted
-    it('Check if address is whitelisted', async () => {
-        assert.equal(await vestingContract.whitelistedAddresses(2, '0x077D360f11D220E4d5D831430c81C26c9be7C4A4'), true);
-    });
-
     // whitelistedAddresses can be called by anyone
     it('whitelistedAddresses can be called by anyone', async () => {
-        assert.equal(await vestingContract.whitelistedAddresses(2, '0x077D360f11D220E4d5D831430c81C26c9be7C4A4', {from: '0x077D360f11D220E4d5D831430c81C26c9be7C4A4'}), true);
+        assert.equal(await vestingContract.whitelistedAddresses(2, '0x077D360f11D220E4d5D831430c81C26c9be7C4A4', {from: '0x077D360f11D220E4d5D831430c81C26c9be7C4A4'}), false);
     });
 
     // Check removeFromWhitelist function
     it('Check removeFromWhitelist function', async () => {
+        // add address to whitelist
+        await vestingContract.addToWhitelist(2, '0x077D360f11D220E4d5D831430c81C26c9be7C4A4');
+
         await vestingContract.removeFromWhitelist(2, '0x077D360f11D220E4d5D831430c81C26c9be7C4A4');
 
         assert.equal(await vestingContract.whitelistedAddresses(2, '0x077D360f11D220E4d5D831430c81C26c9be7C4A4'), false);
@@ -188,33 +186,79 @@ contract('MockedVesting', async () => {
     //#endregion
     
     //#region Test buy function
-    // first check if stage 2 is open, if not open it
     it('Buy tokens, Test 1', async () => {
+        const stage = 2;
+
+        // transfer 1M tokens to vesting contract
+        await pmo.transfer(vestingContract.address, BigInt(1000000 * 10 ** 18));
+        
         // check if stage 2 is not open, open it
-        if (!await vestingContract.stageOpen(2)) {
-            await vestingContract.setStageOpen(2);
-        }
+        await vestingContract.setStageOpen(stage);
 
         // add address to whitelist
-        await vestingContract.addToWhitelist(2, testAccount1);
+        await vestingContract.addToWhitelist(stage, testAccount1);
 
         // mock the ETH price to $1800(1 ETH = 1800 USDT)
         await vestingContract.setLatestEthUsdPrice(1800.00 * 10 ** 8);
 
         // buy 1 ETH worth of tokens
-        await vestingContract.buy(2, {from: testAccount1, value: 1 * 10 ** 18});
+        await vestingContract.buy(stage, {from: testAccount1, value: 1 * 10 ** 18});
 
         // in stage 2, 1 token = 0.18 USDT, so 1 ETH = 1800 USDT, so 1800 / 0.18 = 10000 tokens
         // immadiage token transfer is 8% of 10000 = 800 tokens that user will get immadiately
 
         // Cheking buyer's token balance
-        const balance = await vestingContract.checkBalance(2, testAccount1);
+        const balance = await vestingContract.checkBalance(stage, testAccount1);
 
         assert.equal(balance, (10000-800) * 10 ** 18);
 
         // check if buyer received 800 tokens
         const buyerTokenBalance = await pmo.balanceOf(testAccount1);
         assert.equal(buyerTokenBalance, 800 * 10 ** 18);
+
+        // get tokens available to buy
+        const tokensAvailableToBuy = await vestingContract.getTokensAvailableToBuy(stage);
+        assert.equal(tokensAvailableToBuy, (28000000 * 10 ** 18) - (10000 * 10 ** 18));
+    });
+
+    it('Buy tokens, Test 2', async () => {
+        const stage = 3;
+
+        // transfer 1M tokens to vesting contract
+        await pmo.transfer(vestingContract.address, BigInt(1000000 * 10 ** 18));
+        
+        // check if stage 3 is not open, open it
+        if (!await vestingContract.stageOpen(stage)) {
+            await vestingContract.setStageOpen(stage);
+        }
+
+        // add address to whitelist
+        await vestingContract.addToWhitelist(stage, testAccount1);
+
+        // mock the ETH price to $2000(1 ETH = 2000 USDT)
+        await vestingContract.setLatestEthUsdPrice(2000 * 10 ** 8);
+
+        // buy 0.1234 ETH worth of tokens
+        await vestingContract.buy(stage, {from: testAccount1, value: 0.1234 * 10 ** 18});
+
+        // in stage 3, 1 token = 0.25 USDT, so 0.1234 ETH = 246.8 USDT, so 246.8 / 0.25 = 987.2 tokens
+        // immadiage token transfer is 8% of 987.2 = 78.976 tokens that user will get immadiately
+        const expectedTokenCount = 987.2;
+        const expectedImmediateTokenCount = expectedTokenCount * 0.08;
+
+        // Cheking buyer's token balance
+        const balance = await vestingContract.checkBalance(stage, testAccount1);
+
+        assert.equal(balance, (expectedTokenCount-expectedImmediateTokenCount) * 10 ** 18);
+
+        // check if buyer received 800 tokens
+        const buyerTokenBalance = await pmo.balanceOf(testAccount1);
+        assert.equal(buyerTokenBalance, expectedImmediateTokenCount * 10 ** 18);
+
+        // get tokens available to buy
+        const tokensAvailableToBuy = await vestingContract.getTokensAvailableToBuy(stage);
+        // write to colsone
+        assert.equal(tokensAvailableToBuy, (7000000-987.2) * 10 ** 18);
     });
 
     //#endregion
