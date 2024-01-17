@@ -376,6 +376,14 @@ contract VestingContract is Ownable {
     }
 
     /**
+    * @dev Get the ETH balance of the contract
+    * @return uint256 The ETH balance of the contract
+    */
+    function getEthBalance() public view returns (uint256) {
+        return address(this).balance;
+    }
+
+    /**
     * @dev Withdraw ETH from the contract
     * @param amount uint256 The amount of ETH to withdraw
     */

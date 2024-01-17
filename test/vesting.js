@@ -1,6 +1,5 @@
 const vesting = artifacts.require('MockedVesting');
 const paymento = artifacts.require('Paymento'); 
-const helper = require("../helpers/truffleTestHelper");
 
 // test deploy
 contract('MockedVesting', async () => {
@@ -18,7 +17,7 @@ contract('MockedVesting', async () => {
         // deploy the vesting contract
         vestingContract = await vesting.new(pmo.address, '0x8514F908eE2B47a7f83c60A564d2Acf8f3F0baEC');
 
-        // get ganache account 1
+        // get ganache  account 1
         testAccount1 = (await web3.eth.getAccounts())[1];
     });
 
@@ -258,8 +257,60 @@ contract('MockedVesting', async () => {
         // get tokens available to buy
         const tokensAvailableToBuy = await vestingContract.getTokensAvailableToBuy(stage);
         // write to colsone
-        assert.equal(tokensAvailableToBuy, (7000000-987.2) * 10 ** 18);
+        assert.equal(tokensAvailableToBuy, (7000000-expectedTokenCount) * 10 ** 18);
     });
+
+    it('Buy tokens, Withrawal ETH', async () => {
+        const stage = 3;
+
+        const owner = (await web3.eth.getAccounts())[0];
+        const ownerEthBalanceBeforeBuy = await web3.eth.getBalance(owner);
+
+        // transfer 1M tokens to vesting contract
+        await pmo.transfer(vestingContract.address, BigInt(1000000 * 10 ** 18));
+        
+        // Open the stage
+        await vestingContract.setStageOpen(stage);
+
+        // add address to whitelist
+        await vestingContract.addToWhitelist(stage, testAccount1);
+
+        // mock the ETH price to $2000(1 ETH = 2000 USDT)
+        await vestingContract.setLatestEthUsdPrice(2000 * 10 ** 8);
+
+        // buy 12.3456 ETH worth of tokens
+        await vestingContract.buy(stage, {from: testAccount1, value: 12 * 10 ** 18});
+
+        // in stage 3, 1 token = 0.25 USDT, 2000 * 12 = 24000 USDT, so 24000 / 0.25 = 96000 tokens
+        // immadiage token transfer is 8% of 96000 = 7680 tokens that user will get immadiately
+        const expectedTokenCount = 96000;
+        const expectedImmediateTokenCount = expectedTokenCount * 0.08;
+
+        // Cheking buyer's token balance
+        const balance = await vestingContract.checkBalance(stage, testAccount1);
+
+        assert.equal(balance, (expectedTokenCount-expectedImmediateTokenCount) * 10 ** 18);
+
+        // check if buyer received 7680 tokens
+        const buyerTokenBalance = await pmo.balanceOf(testAccount1);
+        assert.equal(buyerTokenBalance, expectedImmediateTokenCount * 10 ** 18);
+
+        // get tokens available to buy
+        const tokensAvailableToBuy = await vestingContract.getTokensAvailableToBuy(stage);
+        assert.equal(tokensAvailableToBuy, (7000000-expectedTokenCount) * 10 ** 18);
+
+        const ethBalance = await vestingContract.getEthBalance();
+
+        // withdraw ETH
+        await vestingContract.withdrawEth(ethBalance);
+
+        // check owner's ETH balance
+        const ownerEthBalanceAfterBuy = await web3.eth.getBalance(owner);
+        
+        assert.equal(ownerEthBalanceAfterBuy - ownerEthBalanceBeforeBuy >= 11.999 * 10 ** 18, true);
+    });
+
+    
 
     //#endregion
 });
