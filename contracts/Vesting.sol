@@ -33,8 +33,8 @@ contract VestingContract is Ownable {
         uint256 vestingDays; // Number of months for vesting
     }
 
-    IERC20 public token;
-    AggregatorV3Interface internal ethUsdPriceFeed;
+    IERC20 public _pmoToken;
+    AggregatorV3Interface internal _ethUsdPriceFeed;
 
     mapping(uint256 => VestingStageModel) public vestingStages;
     mapping(uint256 => mapping(address => bool)) public whitelistedAddresses;
@@ -46,9 +46,9 @@ contract VestingContract is Ownable {
     mapping(uint256 => bool) public stageOpen;
     mapping(uint256 => bool) public stageAllocationComplete;
 
-    constructor(IERC20 _token, AggregatorV3Interface _ethUsdPriceFeed) Ownable(msg.sender) {
-        token = _token;
-        ethUsdPriceFeed = _ethUsdPriceFeed;
+    constructor(IERC20 token, AggregatorV3Interface ethUsdPriceFeed) Ownable(msg.sender) {
+        _pmoToken = token;
+        _ethUsdPriceFeed = ethUsdPriceFeed;
 
         // EarlyInvestors
         vestingStages[uint256(Stages.EarlyInvestors)] = VestingStageModel({
@@ -174,7 +174,7 @@ contract VestingContract is Ownable {
     * @return uint256 The latest ETH/USD price
     */
     function getLatestEthUsdPrice() public virtual view returns (uint256) {
-        (, int256 price, , , ) = ethUsdPriceFeed.latestRoundData();
+        (, int256 price, , , ) = _ethUsdPriceFeed.latestRoundData();
         return uint256(price);
     }
 
@@ -223,7 +223,7 @@ contract VestingContract is Ownable {
         uint256 ethUsdValue = msg.value * ethUsdPrice;
 
         // Calculate the amount of tokens to buy
-        uint256 tokensToBuy = (ethUsdValue / vestingStages[stage].price) * 10 ** 18;
+        uint256 tokensToBuy = (ethUsdValue / vestingStages[stage].price);
 
         // Check if this amount of tokens is available to buy
         require(totalTokenPurchasedOrAllocatedPerStage[stage] + tokensToBuy <= vestingStages[stage].tokenCount, "Not enough tokens available");
@@ -242,7 +242,8 @@ contract VestingContract is Ownable {
             userLastClaimTimePerStage[stage][msg.sender] = block.timestamp;
         }
 
-        token.transfer(msg.sender, immadiateTokenRelease);
+        // Transfer immadiateTokenRelease of token to sender
+        _pmoToken.transfer(msg.sender, immadiateTokenRelease);
     }
 
     /**
@@ -264,7 +265,7 @@ contract VestingContract is Ownable {
 
         if(vestingStages[stage].immadiateTokenReleasePercentage > 0) {
             immadiateTokenRelease = (amount * vestingStages[stage].immadiateTokenReleasePercentage) / 100;
-            token.transfer(user, immadiateTokenRelease);
+            _pmoToken.transfer(user, immadiateTokenRelease);
         }
 
         // Update user balance
@@ -314,7 +315,7 @@ contract VestingContract is Ownable {
         userLastClaimTimePerStage[stage][msg.sender] = block.timestamp;
 
         // Transfer the tokens to the user
-        token.transfer(msg.sender, tokensToRelease);
+        _pmoToken.transfer(msg.sender, tokensToRelease);
     }
 
     /**
@@ -375,6 +376,14 @@ contract VestingContract is Ownable {
     }
 
     /**
+    * @dev Get the ETH balance of the contract
+    * @return uint256 The ETH balance of the contract
+    */
+    function getEthBalance() public view returns (uint256) {
+        return address(this).balance;
+    }
+
+    /**
     * @dev Withdraw ETH from the contract
     * @param amount uint256 The amount of ETH to withdraw
     */
@@ -397,7 +406,7 @@ contract VestingContract is Ownable {
 
         require(amount > 0, "No tokens to withdraw");
 
-        token.transfer(owner(), amount);
+        _pmoToken.transfer(owner(), amount);
     }
 
 }
