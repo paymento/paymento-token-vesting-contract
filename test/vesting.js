@@ -278,7 +278,7 @@ contract('MockedVesting', async () => {
         // mock the ETH price to $2000(1 ETH = 2000 USDT)
         await vestingContract.setLatestEthUsdPrice(2000 * 10 ** 8);
 
-        // buy 12.3456 ETH worth of tokens
+        // buy 12 ETH worth of tokens
         await vestingContract.buy(stage, {from: testAccount1, value: 12 * 10 ** 18});
 
         // in stage 3, 1 token = 0.25 USDT, 2000 * 12 = 24000 USDT, so 24000 / 0.25 = 96000 tokens

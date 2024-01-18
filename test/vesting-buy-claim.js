@@ -133,7 +133,7 @@ contract('MockedVesting', async () => {
         assert.equal(pmoBalance, (800 + 517.5) * 10 ** 18);
     });
 
-    // Mock passed 25 days
+    // Mock passed 480 days
     it('Mock passed 480 days', async () => {
         await helper.advanceTimeAndBlock(480 * 24 * 60 * 60);
         const days = await vestingContract.getDaysPassedFromLastestClaim(2, testAccount1);
@@ -144,14 +144,12 @@ contract('MockedVesting', async () => {
     it('Claim all tokens', async () => {
         await vestingContract.claimTokens(2, {from: testAccount1});
         const balance = await vestingContract.checkBalance(2, testAccount1);
-        // 10000 is the first bought amount
-        // 800 is immadiate transfer amount
-        // 517.5 is claimed amount after 27 days
+        // In stage 2, vesting days is 480 days so all tokens should be claimed
         assert.equal(balance, 0);
 
         pmoBalance = await pmo.balanceOf(testAccount1);
-        //! 800 is immadiate transfer amount
-        //! 517.5 is claimed amount after 27 days
+        
+        // 10000 is the first bought amount and all tokens should be claimed and transferred to user
         assert.equal(pmoBalance, 10000 * 10 ** 18);
     });
 
