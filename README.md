@@ -1,5 +1,7 @@
 # Project Title
 
+Paymento is an innovative TRUE non-custodial crypto payment platform that seamlessly integrates Crypto Payment Gateway, Buy Now, Pay Later (BNPL) services using DeFi lending and borrowing protocols
+
 ## Overview
 
 Welcome to the Paymento Vesting Contract! This smart contract manages the allocation and vesting of tokens across different stages of our project. Whether you are an investor or a developer, this README provides essential information on how the contract works and how you can interact with it.
