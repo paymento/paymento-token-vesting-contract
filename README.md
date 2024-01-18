@@ -1,4 +1,4 @@
-# Project Title
+# Paymento ERC20 Token and Vesting Contract
 
 ## Overview
 
