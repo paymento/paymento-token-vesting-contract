@@ -1,6 +1,6 @@
 # Paymento ERC20 Token and Vesting Contract
 
-Paymento is an innovative TRUE non-custodial crypto payment platform that seamlessly integrates Crypto Payment Gateway, Buy Now, Pay Later (BNPL) services using DeFi lending and borrowing protocols
+[Paymento](https://paymento.io) is an innovative TRUE non-custodial crypto payment platform that seamlessly integrates Crypto Payment Gateway, Buy Now, Pay Later (BNPL) services using DeFi lending and borrowing protocols
 
 ## Overview
 
