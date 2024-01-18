@@ -1,4 +1,4 @@
-# Project Title
+# Paymento ERC20 Token and Vesting Contract
 
 Paymento is an innovative TRUE non-custodial crypto payment platform that seamlessly integrates Crypto Payment Gateway, Buy Now, Pay Later (BNPL) services using DeFi lending and borrowing protocols
 
@@ -100,7 +100,12 @@ The contract provides functions for the owner to manage stages, whitelists, and 
    
    Make sure Ganache is running. Ganache is a personal blockchain that Truffle can use for testing. If you haven't installed Ganache, you can download it from the [official website](https://www.trufflesuite.com/ganache) and follow the installation instructions.
 
-2. Configure Truffle:
+   To run the Ganache on your local computer you can run it using its CLI
+   ```bash
+   ganache-cli
+   ```
+
+3. Configure Truffle:
 
    Ensure that your Truffle configuration (`truffle-config.js` or `truffle.js`) is set up to use Ganache. It should look something like this:
 
@@ -118,7 +123,7 @@ The contract provides functions for the owner to manage stages, whitelists, and 
 
    Make sure the `host` and `port` values match your Ganache configuration.
 
-3. Run Tests:
+4. Run Tests:
 
    Open a terminal and navigate to the root directory of your Truffle project. Run the following command to execute your tests:
 
@@ -128,7 +133,7 @@ The contract provides functions for the owner to manage stages, whitelists, and 
 
    Truffle will look for test files in the `test` directory and execute them on the Ganache blockchain. Ensure that your smart contract migrations are complete, and the contract is deployed on the local Ganache blockchain.
 
-4. Review Test Output:
+5. Review Test Output:
 
    Truffle will display the test results in the terminal. It will indicate whether each test case passed or failed. If any tests fail, review the error messages to identify and fix the issues in your smart contract or test cases.
 
