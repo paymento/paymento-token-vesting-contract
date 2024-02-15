@@ -153,4 +153,10 @@ contract('MockedVesting', async () => {
         assert.equal(pmoBalance, 10000 * 10 ** 18);
     });
 
+    // check tokens to buy
+    it('Check tokens to buy', async () => {
+        const tokens = await vestingContract.getTokensAvailableToBuy(2);
+        assert.equal(tokens, (28000000 - 10000) * 10 ** 18);
+    });
+
 });
