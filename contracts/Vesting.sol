@@ -400,9 +400,9 @@ contract VestingContract is Ownable {
     function withdrawUnsoldTokens(uint stage) external onlyOwner {
         require(stage <= uint256(Stages.GeoExpansionReserves), "Invalid stage");
 
-        require(stageOpen[stage] == true, "Stage is still open");
+        require(!stageOpen[stage], "Stage is still open");
 
-        uint256 amount = getTokensAvailableToBuy(stage);
+        uint256 amount = vestingStages[stage].tokenCount - totalTokenPurchasedOrAllocatedPerStage[stage];
 
         require(amount > 0, "No tokens to withdraw");
 
