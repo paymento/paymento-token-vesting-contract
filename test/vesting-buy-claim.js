@@ -81,7 +81,7 @@ contract('MockedVesting', async () => {
     it('Check the amount of token user can claim', async () => {
         const claimableTokens = await vestingContract.checkClaimableTokens(2, testAccount1);
 
-        //in stage 2, vesting days is 480 days
+        
         // so, 9200/480 = 19.166666666666
         assert.equal(claimableTokens, 19166666666666666666);
     });
