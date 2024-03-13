@@ -78,75 +78,6 @@ contract('MockedVesting', async () => {
     });
     //#endregion
 
-    //#region Check Whitelist function
-    // function addToWhiteList should only work for stage 2 & 3
-    it('addToWhitelist should only work for stage 2 & 3', async () => {
-        try {
-            await vestingContract.addToWhitelist(0, '0x077D360f11D220E4d5D831430c81C26c9be7C4A4');
-            assert.fail();
-        } catch (error) {
-            assert.ok(/revert/.test(error.message));
-        }
-    });
-
-    // function removeFromWhiteList should only work for stage 2 & 3
-    it('removeFromWhitelist should only work for stage 2 & 3', async () => {
-        try {
-            await vestingContract.removeFromWhitelist(0, '0x077D360f11D220E4d5D831430c81C26c9be7C4A4');
-            assert.fail();
-        } catch (error) {
-            assert.ok(/revert/.test(error.message));
-        }
-    });
-
-    // Check address whitelist
-    it('Check whitelist function', async () => {
-        // check if address is NOT whitelisted
-        assert.equal(await vestingContract.whitelistedAddresses(2, '0x077D360f11D220E4d5D831430c81C26c9be7C4A4'), false);
-
-        // add address to whitelist
-        await vestingContract.addToWhitelist(2, '0x077D360f11D220E4d5D831430c81C26c9be7C4A4');
-
-        // check again if address is whitelisted
-        assert.equal(await vestingContract.whitelistedAddresses(2, '0x077D360f11D220E4d5D831430c81C26c9be7C4A4'), true);
-    });
-
-    // function addToWhitelist should fail if not called by owner
-    it('Check addToWhitelist function calling by not owner', async () => {
-        try {
-            await vestingContract.addToWhitelist(2, '0x077D360f11D220E4d5D831430c81C26c9be7C4A4', {from: '0x077D360f11D220E4d5D831430c81C26c9be7C4A4'});
-            assert.fail();
-        } catch (error) {
-            assert.ok(/revert/.test(error.message));
-        }
-    });
-
-    // function removeFromWhitelist should fail if not called by owner
-    it('Check removeFromWhitelist function calling by not owner', async () => {
-        try {
-            await vestingContract.removeFromWhitelist(2, '0x077D360f11D220E4d5D831430c81C26c9be7C4A4', {from: '0x077D360f11D220E4d5D831430c81C26c9be7C4A4'});
-            assert.fail();
-        } catch (error) {
-            assert.ok(/revert/.test(error.message));
-        }
-    });
-
-    // whitelistedAddresses can be called by anyone
-    it('whitelistedAddresses can be called by anyone', async () => {
-        assert.equal(await vestingContract.whitelistedAddresses(2, '0x077D360f11D220E4d5D831430c81C26c9be7C4A4', {from: '0x077D360f11D220E4d5D831430c81C26c9be7C4A4'}), false);
-    });
-
-    // Check removeFromWhitelist function
-    it('Check removeFromWhitelist function', async () => {
-        // add address to whitelist
-        await vestingContract.addToWhitelist(2, '0x077D360f11D220E4d5D831430c81C26c9be7C4A4');
-
-        await vestingContract.removeFromWhitelist(2, '0x077D360f11D220E4d5D831430c81C26c9be7C4A4');
-
-        assert.equal(await vestingContract.whitelistedAddresses(2, '0x077D360f11D220E4d5D831430c81C26c9be7C4A4'), false);
-    });
-    //#endregion
-
     //#region Test TotalTokenForStage
     // test if TotalTokenForStage is correct
     it('Check TotalTokenForStage function', async () => {
@@ -194,9 +125,6 @@ contract('MockedVesting', async () => {
         // check if stage 2 is not open, open it
         await vestingContract.setStageOpen(stage);
 
-        // add address to whitelist
-        await vestingContract.addToWhitelist(stage, testAccount1);
-
         // mock the ETH price to $1800(1 ETH = 1800 USDT)
         await vestingContract.setLatestEthUsdPrice(1800.00 * 10 ** 8);
 
@@ -230,9 +158,6 @@ contract('MockedVesting', async () => {
         if (!await vestingContract.stageOpen(stage)) {
             await vestingContract.setStageOpen(stage);
         }
-
-        // add address to whitelist
-        await vestingContract.addToWhitelist(stage, testAccount1);
 
         // mock the ETH price to $2000(1 ETH = 2000 USDT)
         await vestingContract.setLatestEthUsdPrice(2000 * 10 ** 8);
@@ -271,9 +196,6 @@ contract('MockedVesting', async () => {
         
         // Open the stage
         await vestingContract.setStageOpen(stage);
-
-        // add address to whitelist
-        await vestingContract.addToWhitelist(stage, testAccount1);
 
         // mock the ETH price to $2000(1 ETH = 2000 USDT)
         await vestingContract.setLatestEthUsdPrice(2000 * 10 ** 8);

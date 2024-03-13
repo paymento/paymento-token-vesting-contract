@@ -37,7 +37,6 @@ contract VestingContract is Ownable {
     AggregatorV3Interface internal _ethUsdPriceFeed;
 
     mapping(uint256 => VestingStageModel) public vestingStages;
-    mapping(uint256 => mapping(address => bool)) public whitelistedAddresses;
     mapping(uint256 => uint256) public totalTokenPurchasedOrAllocatedPerStage;
     mapping(uint256 => mapping(address => uint256)) public userBalancePerStage;
     mapping(uint256 => mapping(address => uint256)) public userLastClaimTimePerStage;
@@ -144,32 +143,6 @@ contract VestingContract is Ownable {
     }
 
     /**
-    * @dev Register an address in whitelist of Private Sale 1 and Private Sale 2
-    * @param stage uint256 The stage to close
-    * @param user address The address to register
-    */
-    function addToWhitelist(uint stage, address user) external onlyOwner {
-        require(stage == (uint)(Stages.PrivateSale1) || stage == (uint)(Stages.PrivateSale2),
-            "Only Private Sale 1 and Private Sale 2 can have a whitelist"
-        );
-
-        whitelistedAddresses[stage][user] = true;
-    }
-
-    /**
-    * @dev Remove an address from whitelist of Private Sale 1 and Private Sale 2
-    * @param stage uint256 The stage to close
-    * @param user address The address to remove
-    */
-    function removeFromWhitelist(uint stage, address user) external onlyOwner {
-        require(stage == (uint)(Stages.PrivateSale1) || stage == (uint)(Stages.PrivateSale2),
-            "Only Private Sale 1 and Private Sale 2 can have a whitelist"
-        );
-
-        whitelistedAddresses[stage][user] = false;
-    }
-
-    /**
     * @dev Get the latest ETH/USD price from Chainlink
     * @return uint256 The latest ETH/USD price
     */
@@ -199,7 +172,6 @@ contract VestingContract is Ownable {
     /**
     * @dev Users can buy the tokens from the contract
     * @dev Buy is allowed only in the stages Early Investors, Seed, Private Sale 1, Private Sale 2
-    * @dev To buy the tokens, in stage Private Sale 1 and 2 the user must be whitelisted
     * @dev The amount of tokens to buy is calculated by dividing the amount of ETH/USDT sent by the price of the stage
     * @param stage uint256 The stage to buy
     */
@@ -208,11 +180,6 @@ contract VestingContract is Ownable {
 
         // Check if the stage is open
         require(stageOpen[stage], "Stage is not open");
-
-        // Check if stage is Private Sale 1 or Private Sale 2 and if the user is whitelisted
-        if(stage == (uint)(Stages.PrivateSale1) || stage == (uint)(Stages.PrivateSale2)) {
-            require(whitelistedAddresses[stage][msg.sender], "User is not whitelisted");
-        }
 
         // Get the current price of ETH/USDT
         // This api returns price in 8 decimals, for example 100000000 equals to US$1 or 228581475150 equals to US$2285.81475150

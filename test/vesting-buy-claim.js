@@ -30,12 +30,6 @@ contract('MockedVesting', async () => {
         assert.equal(await vestingContract.stageOpen(2), true);
     });
 
-    // add account1 to whitelist
-    it('should add account1 to whitelist', async () => {
-        await vestingContract.addToWhitelist(2, testAccount1);
-        assert.equal(await vestingContract.whitelistedAddresses(2, testAccount1), true);
-    });
-
     // test if ETH/USDT price is eual to 2000USD
     it('Check ETH/USDT price', async () => {
         // mock the ETH price to $1800(1 ETH = 1800 USDT)

@@ -56,7 +56,7 @@ The `VestingStageModel` struct holds data for each vesting stage, including:
 
 ### Variables and Mappings
 
-The contract uses various variables and mappings to track token allocations, user balances, whitelists, and more.
+The contract uses various variables and mappings to track token allocations, user balances, and more.
 
 ### Constructor
 
@@ -64,7 +64,7 @@ The constructor initializes the contract with the ERC-20 token and Chainlink ETH
 
 ### Functions
 
-The contract provides functions for the owner to manage stages, whitelists, and allocations. Users can buy tokens, claim vested tokens, and check balances.
+The contract provides functions for the owner to manage stages, and allocations. Users can buy tokens, claim vested tokens, and check balances.
 
 ## Getting Started
 
@@ -145,8 +145,7 @@ If you are an investor looking to participate in the token sale, follow these st
 
 1. Review the vesting stages and token prices in the contract.
 2. During the specified stages, use the `buy` function to purchase tokens.
-3. If applicable, ensure you are whitelisted for Private Sale 1 or Private Sale 2.
-4. Monitor your vested tokens and claim them using the `claimTokens` function.
+3. Monitor your vested tokens and claim them using the `claimTokens` function.
 
 ### Developers
 
