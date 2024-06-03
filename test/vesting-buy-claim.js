@@ -52,6 +52,23 @@ contract('MockedVesting', async () => {
         assert.equal(balance, (10000-800) * 10 ** 18);
     });
 
+    // Check if buy event is emitted
+    it('Check if buy event is emitted', async () => {
+        const events = await vestingContract.getPastEvents('BuyLog', {fromBlock: 0, toBlock: 'latest'});
+        assert.equal(events.length, 1);
+    });
+
+    // Check if buy event is emitted with correct values
+    it('Check if buy event is emitted with correct values', async () => {
+        const events = await vestingContract.getPastEvents('BuyLog', {fromBlock: 0, toBlock: 'latest'});
+        const event = events[0];
+        assert.equal(event.returnValues.stage, 2);
+        assert.equal(event.returnValues.buyerAddress, testAccount1);
+        assert.equal(event.returnValues.purchaseToken, 10000 * 10 ** 18);
+        assert.equal(event.returnValues.ethValue, 1 * 10 ** 18);
+        assert.equal(event.returnValues.ethUsdPrice, 1800000); // USD with 3 decimal places
+    });
+
     // Check passed days
     it('check passed days', async () => {
         const days = await vestingContract.getDaysPassedFromLastestClaim(2, testAccount1);
@@ -127,6 +144,22 @@ contract('MockedVesting', async () => {
         assert.equal(pmoBalance, (800 + 517.5) * 10 ** 18);
     });
 
+    // Check if ClaimTokensLog event is emitted
+    it('Check if ClaimTokensLog event is emitted', async () => {
+        const events = await vestingContract.getPastEvents('ClaimTokensLog', {fromBlock: 0, toBlock: 'latest'});
+        assert.equal(events.length, 1);
+    });
+
+    // Check if ClaimTokensLog event is emitted with correct values
+    it('Check if ClaimTokensLog event is emitted with correct values', async () => {
+        const events = await vestingContract.getPastEvents('ClaimTokensLog', {fromBlock: 0, toBlock: 'latest'});
+        const event = events[0];
+        assert.equal(event.returnValues.stage, 2);
+        assert.equal(event.returnValues.buyerAddress, testAccount1);
+        assert.equal(event.returnValues.transferedAmount, 517.5 * 10 ** 18);
+        assert.equal(event.returnValues.balance, (10000-800-517.5) * 10 ** 18);
+    });
+
     // Mock passed 480 days
     it('Mock passed 480 days', async () => {
         await helper.advanceTimeAndBlock(480 * 24 * 60 * 60);
@@ -145,6 +178,22 @@ contract('MockedVesting', async () => {
         
         // 10000 is the first bought amount and all tokens should be claimed and transferred to user
         assert.equal(pmoBalance, 10000 * 10 ** 18);
+    });
+
+    // Check if ClaimTokensLog event is emitted
+    it('Check if ClaimTokensLog event is emitted', async () => {
+        const events = await vestingContract.getPastEvents('ClaimTokensLog', {fromBlock: 0, toBlock: 'latest'});
+        assert.equal(events.length, 2);
+    });
+
+    // Check if ClaimTokensLog event is emitted with correct values
+    it('Check if ClaimTokensLog event is emitted with correct values', async () => {
+        const events = await vestingContract.getPastEvents('ClaimTokensLog', {fromBlock: 0, toBlock: 'latest'});
+        const event = events[1];
+        assert.equal(event.returnValues.stage, 2);
+        assert.equal(event.returnValues.buyerAddress, testAccount1);
+        assert.equal(event.returnValues.transferedAmount, (10000-800-517.5) * 10 ** 18);
+        assert.equal(event.returnValues.balance, 0);
     });
 
     // check tokens to buy
