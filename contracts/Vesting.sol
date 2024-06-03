@@ -14,7 +14,7 @@ contract VestingContract is Ownable {
 
     // Stages
     enum Stages {
-        EarlyInvestors,     // Stage 0: 17.5M tokens @ price 0.075USDT for Early Investors
+        EarlyInvestors,     // Stage 0: 17.5M tokens @ price 0.075USDT for Early Investors = 17.5M * 0.075 = 1,312,500 USDT
         Seed,               // Stage 1: 24.5M tokens @ price 0.12USDT for Seed
         PrivateSale1,       // Stage 2: 28M tokens @ price 0.18USDT for Private Sale 1
         PrivateSale2,       // Stage 3: 7M tokens @ price 0.25USDT for Private Sale 2
@@ -44,6 +44,19 @@ contract VestingContract is Ownable {
     mapping(uint256 => uint256) public totalAllocated;
     mapping(uint256 => bool) public stageOpen;
     mapping(uint256 => bool) public stageAllocationComplete;
+
+    event BuyLog(uint256 indexed stage,
+        address indexed buyerAddress, 
+        uint256 time, 
+        uint256 ethValue,
+        uint256 ethUsdPrice,
+        uint256 purchaseToken);
+
+    event ClaimTokensLog(uint256 indexed stage, 
+        address indexed buyerAddress, 
+        uint256 time, 
+        uint256 transferedAmount,
+        uint256 balance);
 
     constructor(IERC20 token, AggregatorV3Interface ethUsdPriceFeed) Ownable(msg.sender) {
         _pmoToken = token;
@@ -211,6 +224,8 @@ contract VestingContract is Ownable {
 
         // Transfer immadiateTokenRelease of token to sender
         _pmoToken.transfer(msg.sender, immadiateTokenRelease);
+
+        emit BuyLog(stage, msg.sender, block.timestamp, msg.value, ethUsdPrice, tokensToBuy);
     }
 
     /**
@@ -283,6 +298,12 @@ contract VestingContract is Ownable {
 
         // Transfer the tokens to the user
         _pmoToken.transfer(msg.sender, tokensToRelease);
+
+        emit ClaimTokensLog(stage, 
+            msg.sender, 
+            block.timestamp, 
+            tokensToRelease,
+            userBalancePerStage[stage][msg.sender]);
     }
 
     /**
