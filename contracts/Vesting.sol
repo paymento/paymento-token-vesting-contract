@@ -30,7 +30,7 @@ contract VestingContract is Ownable, ReentrancyGuard {
     struct VestingStageModel {
         uint256 tokenCount; // Number of tokens to be vested
         uint256 price; // Price of the token
-        uint256 immadiateTokenReleasePercentage; // Percentage of tokens to be released immadiately
+        uint256 immediateTokenReleasePercentage; // Percentage of tokens to be released immadiately
         uint256 vestingDays; // Number of months for vesting
     }
 
@@ -67,7 +67,7 @@ contract VestingContract is Ownable, ReentrancyGuard {
         vestingStages[uint256(Stages.EarlyInvestors)] = VestingStageModel({
             tokenCount: 17500000 * 10 ** 18,
             price: 75,
-            immadiateTokenReleasePercentage: 5,
+            immediateTokenReleasePercentage: 5,
             vestingDays: 720 // 24 months
         });
         
@@ -75,7 +75,7 @@ contract VestingContract is Ownable, ReentrancyGuard {
         vestingStages[uint256(Stages.Seed)] = VestingStageModel({
             tokenCount: 24500000 * 10 ** 18,
             price: 120,
-            immadiateTokenReleasePercentage: 5,
+            immediateTokenReleasePercentage: 5,
             vestingDays: 600 // 20 months
         });
 
@@ -83,7 +83,7 @@ contract VestingContract is Ownable, ReentrancyGuard {
         vestingStages[uint256(Stages.PrivateSale1)] = VestingStageModel({
             tokenCount: 28000000 * 10 ** 18,
             price: 180,
-            immadiateTokenReleasePercentage: 8,
+            immediateTokenReleasePercentage: 8,
             vestingDays: 480 // 16 months
         });
 
@@ -91,7 +91,7 @@ contract VestingContract is Ownable, ReentrancyGuard {
         vestingStages[uint256(Stages.PrivateSale2)] = VestingStageModel({
             tokenCount: 7000000 * 10 ** 18,
             price: 250,
-            immadiateTokenReleasePercentage: 8,
+            immediateTokenReleasePercentage: 8,
             vestingDays: 360 // 12 months
         });
         
@@ -99,7 +99,7 @@ contract VestingContract is Ownable, ReentrancyGuard {
         vestingStages[uint256(Stages.Community)] = VestingStageModel({
             tokenCount: 49000000 * 10 ** 18,
             price: 0,
-            immadiateTokenReleasePercentage: 10,
+            immediateTokenReleasePercentage: 10,
             vestingDays: 1080 // 36 months
         });
 
@@ -107,7 +107,7 @@ contract VestingContract is Ownable, ReentrancyGuard {
         vestingStages[uint256(Stages.Partnership)] = VestingStageModel({
             tokenCount: 28000000 * 10 ** 18,
             price: 0,
-            immadiateTokenReleasePercentage: 10,
+            immediateTokenReleasePercentage: 10,
             vestingDays: 1080 // 36 months
         });
 
@@ -115,7 +115,7 @@ contract VestingContract is Ownable, ReentrancyGuard {
         vestingStages[uint256(Stages.Advisors)] = VestingStageModel({
             tokenCount: 10500000 * 10 ** 18,
             price: 0,
-            immadiateTokenReleasePercentage: 10,
+            immediateTokenReleasePercentage: 10,
             vestingDays: 600 // 20 months
         });
 
@@ -123,7 +123,7 @@ contract VestingContract is Ownable, ReentrancyGuard {
         vestingStages[uint256(Stages.DevelopmentAndTeam)] = VestingStageModel({
             tokenCount: 70000000 * 10 ** 18,
             price: 0,
-            immadiateTokenReleasePercentage: 10,
+            immediateTokenReleasePercentage: 10,
             vestingDays: 720 // 24 months
         });
 
@@ -131,7 +131,7 @@ contract VestingContract is Ownable, ReentrancyGuard {
         vestingStages[uint256(Stages.GeoExpansionReserves)] = VestingStageModel({
             tokenCount: 52500000 * 10 ** 18,
             price: 0,
-            immadiateTokenReleasePercentage: 10,
+            immediateTokenReleasePercentage: 10,
             vestingDays: 1800 // 60 months
         });
     }
@@ -210,7 +210,7 @@ contract VestingContract is Ownable, ReentrancyGuard {
         require(totalTokenPurchasedOrAllocatedPerStage[stage] + tokensToBuy <= vestingStages[stage].tokenCount, "Not enough tokens available");
 
         // Transfer the immadiate percentage of tokens to the user
-        uint256 immadiateTokenRelease = (tokensToBuy * vestingStages[stage].immadiateTokenReleasePercentage) / 100;
+        uint256 immadiateTokenRelease = (tokensToBuy * vestingStages[stage].immediateTokenReleasePercentage) / 100;
         
         // Update the total tokens purchased
         totalTokenPurchasedOrAllocatedPerStage[stage] += tokensToBuy;
@@ -246,8 +246,8 @@ contract VestingContract is Ownable, ReentrancyGuard {
         // Transfer the immadiate percentage of tokens to the user
         uint256 immadiateTokenRelease = 0;
 
-        if(vestingStages[stage].immadiateTokenReleasePercentage > 0) {
-            immadiateTokenRelease = (amount * vestingStages[stage].immadiateTokenReleasePercentage) / 100;
+        if(vestingStages[stage].immediateTokenReleasePercentage > 0) {
+            immadiateTokenRelease = (amount * vestingStages[stage].immediateTokenReleasePercentage) / 100;
             _pmoToken.transfer(user, immadiateTokenRelease);
         }
 

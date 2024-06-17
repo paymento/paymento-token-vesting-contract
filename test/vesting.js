@@ -36,7 +36,7 @@ contract('MockedVesting', async () => {
         const stage = await vestingContract.vestingStages(0);
         assert.equal(stage.tokenCount, 17500000 * 10 ** 18);
         assert.equal(stage.price, 75);
-        assert.equal(stage.immadiateTokenReleasePercentage, 5);
+        assert.equal(stage.immediateTokenReleasePercentage, 5);
         assert.equal(stage.vestingDays, 720);
     });
 
