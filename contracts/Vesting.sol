@@ -6,9 +6,10 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./Token.sol";
 
-contract VestingContract is Ownable {
+contract VestingContract is Ownable, ReentrancyGuard {
     // We use the SafeMath library to prevent overflows and underflows
     using Math for uint256;
 
@@ -33,8 +34,8 @@ contract VestingContract is Ownable {
         uint256 vestingDays; // Number of months for vesting
     }
 
-    IERC20 public _pmoToken;
-    AggregatorV3Interface internal _ethUsdPriceFeed;
+    IERC20 public immutable _pmoToken;
+    AggregatorV3Interface internal immutable _ethUsdPriceFeed;
 
     mapping(uint256 => VestingStageModel) public vestingStages;
     mapping(uint256 => uint256) public totalTokenPurchasedOrAllocatedPerStage;
@@ -188,7 +189,7 @@ contract VestingContract is Ownable {
     * @dev The amount of tokens to buy is calculated by dividing the amount of ETH/USDT sent by the price of the stage
     * @param stage uint256 The stage to buy
     */
-    function buy(uint stage) external payable {
+    function buy(uint stage) external payable nonReentrant {
         require(stage < uint256(Stages.Community), "Invalid stage to buy");
 
         // Check if the stage is open
@@ -261,7 +262,7 @@ contract VestingContract is Ownable {
     * @dev Claim tokens for a stage
     * @param stage uint256 The stage to claim the tokens
     */
-    function claimTokens(uint stage) external {
+    function claimTokens(uint stage) external nonReentrant{
         require(stage <= uint256(Stages.GeoExpansionReserves), "Invalid stage");
 
         // check if user has balance
