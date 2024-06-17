@@ -12,6 +12,7 @@ import "./Token.sol";
 contract VestingContract is Ownable, ReentrancyGuard {
     // We use the SafeMath library to prevent overflows and underflows
     using Math for uint256;
+    uint256 private constant DECIMALS = 10 ** 18;
 
     // Stages
     enum Stages {
@@ -65,7 +66,7 @@ contract VestingContract is Ownable, ReentrancyGuard {
 
         // EarlyInvestors
         vestingStages[uint256(Stages.EarlyInvestors)] = VestingStageModel({
-            tokenCount: 17500000 * 10 ** 18,
+            tokenCount: 17500000 * DECIMALS,
             price: 75,
             immediateTokenReleasePercentage: 5,
             vestingDays: 720 // 24 months
@@ -73,7 +74,7 @@ contract VestingContract is Ownable, ReentrancyGuard {
         
         // Seed
         vestingStages[uint256(Stages.Seed)] = VestingStageModel({
-            tokenCount: 24500000 * 10 ** 18,
+            tokenCount: 24500000 * DECIMALS,
             price: 120,
             immediateTokenReleasePercentage: 5,
             vestingDays: 600 // 20 months
@@ -81,7 +82,7 @@ contract VestingContract is Ownable, ReentrancyGuard {
 
         // Private Sale 1
         vestingStages[uint256(Stages.PrivateSale1)] = VestingStageModel({
-            tokenCount: 28000000 * 10 ** 18,
+            tokenCount: 28000000 * DECIMALS,
             price: 180,
             immediateTokenReleasePercentage: 8,
             vestingDays: 480 // 16 months
@@ -89,7 +90,7 @@ contract VestingContract is Ownable, ReentrancyGuard {
 
         // Private Sale 2
         vestingStages[uint256(Stages.PrivateSale2)] = VestingStageModel({
-            tokenCount: 7000000 * 10 ** 18,
+            tokenCount: 7000000 * DECIMALS,
             price: 250,
             immediateTokenReleasePercentage: 8,
             vestingDays: 360 // 12 months
@@ -97,7 +98,7 @@ contract VestingContract is Ownable, ReentrancyGuard {
         
         // Community
         vestingStages[uint256(Stages.Community)] = VestingStageModel({
-            tokenCount: 49000000 * 10 ** 18,
+            tokenCount: 49000000 * DECIMALS,
             price: 0,
             immediateTokenReleasePercentage: 10,
             vestingDays: 1080 // 36 months
@@ -105,7 +106,7 @@ contract VestingContract is Ownable, ReentrancyGuard {
 
         // Partnership
         vestingStages[uint256(Stages.Partnership)] = VestingStageModel({
-            tokenCount: 28000000 * 10 ** 18,
+            tokenCount: 28000000 * DECIMALS,
             price: 0,
             immediateTokenReleasePercentage: 10,
             vestingDays: 1080 // 36 months
@@ -113,7 +114,7 @@ contract VestingContract is Ownable, ReentrancyGuard {
 
         // Advisors
         vestingStages[uint256(Stages.Advisors)] = VestingStageModel({
-            tokenCount: 10500000 * 10 ** 18,
+            tokenCount: 10500000 * DECIMALS,
             price: 0,
             immediateTokenReleasePercentage: 10,
             vestingDays: 600 // 20 months
@@ -121,7 +122,7 @@ contract VestingContract is Ownable, ReentrancyGuard {
 
         // Development And Team
         vestingStages[uint256(Stages.DevelopmentAndTeam)] = VestingStageModel({
-            tokenCount: 70000000 * 10 ** 18,
+            tokenCount: 70000000 * DECIMALS,
             price: 0,
             immediateTokenReleasePercentage: 10,
             vestingDays: 720 // 24 months
@@ -129,7 +130,7 @@ contract VestingContract is Ownable, ReentrancyGuard {
 
         // Geo Expansion Reserves
         vestingStages[uint256(Stages.GeoExpansionReserves)] = VestingStageModel({
-            tokenCount: 52500000 * 10 ** 18,
+            tokenCount: 52500000 * DECIMALS,
             price: 0,
             immediateTokenReleasePercentage: 10,
             vestingDays: 1800 // 60 months
