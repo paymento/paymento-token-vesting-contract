@@ -6,11 +6,13 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./Token.sol";
 
-contract VestingContract is Ownable {
+contract VestingContract is Ownable, ReentrancyGuard {
     // We use the SafeMath library to prevent overflows and underflows
     using Math for uint256;
+    uint256 private constant DECIMALS = 10 ** 18;
 
     // Stages
     enum Stages {
@@ -29,12 +31,12 @@ contract VestingContract is Ownable {
     struct VestingStageModel {
         uint256 tokenCount; // Number of tokens to be vested
         uint256 price; // Price of the token
-        uint256 immadiateTokenReleasePercentage; // Percentage of tokens to be released immadiately
+        uint256 immediateTokenReleasePercentage; // Percentage of tokens to be released immadiately
         uint256 vestingDays; // Number of months for vesting
     }
 
-    IERC20 public _pmoToken;
-    AggregatorV3Interface internal _ethUsdPriceFeed;
+    IERC20 public immutable _pmoToken;
+    AggregatorV3Interface internal immutable _ethUsdPriceFeed;
 
     mapping(uint256 => VestingStageModel) public vestingStages;
     mapping(uint256 => uint256) public totalTokenPurchasedOrAllocatedPerStage;
@@ -64,73 +66,73 @@ contract VestingContract is Ownable {
 
         // EarlyInvestors
         vestingStages[uint256(Stages.EarlyInvestors)] = VestingStageModel({
-            tokenCount: 17500000 * 10 ** 18,
+            tokenCount: 17500000 * DECIMALS,
             price: 75,
-            immadiateTokenReleasePercentage: 5,
+            immediateTokenReleasePercentage: 5,
             vestingDays: 720 // 24 months
         });
         
         // Seed
         vestingStages[uint256(Stages.Seed)] = VestingStageModel({
-            tokenCount: 24500000 * 10 ** 18,
+            tokenCount: 24500000 * DECIMALS,
             price: 120,
-            immadiateTokenReleasePercentage: 5,
+            immediateTokenReleasePercentage: 5,
             vestingDays: 600 // 20 months
         });
 
         // Private Sale 1
         vestingStages[uint256(Stages.PrivateSale1)] = VestingStageModel({
-            tokenCount: 28000000 * 10 ** 18,
+            tokenCount: 28000000 * DECIMALS,
             price: 180,
-            immadiateTokenReleasePercentage: 8,
+            immediateTokenReleasePercentage: 8,
             vestingDays: 480 // 16 months
         });
 
         // Private Sale 2
         vestingStages[uint256(Stages.PrivateSale2)] = VestingStageModel({
-            tokenCount: 7000000 * 10 ** 18,
+            tokenCount: 7000000 * DECIMALS,
             price: 250,
-            immadiateTokenReleasePercentage: 8,
+            immediateTokenReleasePercentage: 8,
             vestingDays: 360 // 12 months
         });
         
         // Community
         vestingStages[uint256(Stages.Community)] = VestingStageModel({
-            tokenCount: 49000000 * 10 ** 18,
+            tokenCount: 49000000 * DECIMALS,
             price: 0,
-            immadiateTokenReleasePercentage: 10,
+            immediateTokenReleasePercentage: 10,
             vestingDays: 1080 // 36 months
         });
 
         // Partnership
         vestingStages[uint256(Stages.Partnership)] = VestingStageModel({
-            tokenCount: 28000000 * 10 ** 18,
+            tokenCount: 28000000 * DECIMALS,
             price: 0,
-            immadiateTokenReleasePercentage: 10,
+            immediateTokenReleasePercentage: 10,
             vestingDays: 1080 // 36 months
         });
 
         // Advisors
         vestingStages[uint256(Stages.Advisors)] = VestingStageModel({
-            tokenCount: 10500000 * 10 ** 18,
+            tokenCount: 10500000 * DECIMALS,
             price: 0,
-            immadiateTokenReleasePercentage: 10,
+            immediateTokenReleasePercentage: 10,
             vestingDays: 600 // 20 months
         });
 
         // Development And Team
         vestingStages[uint256(Stages.DevelopmentAndTeam)] = VestingStageModel({
-            tokenCount: 70000000 * 10 ** 18,
+            tokenCount: 70000000 * DECIMALS,
             price: 0,
-            immadiateTokenReleasePercentage: 10,
+            immediateTokenReleasePercentage: 10,
             vestingDays: 720 // 24 months
         });
 
         // Geo Expansion Reserves
         vestingStages[uint256(Stages.GeoExpansionReserves)] = VestingStageModel({
-            tokenCount: 52500000 * 10 ** 18,
+            tokenCount: 52500000 * DECIMALS,
             price: 0,
-            immadiateTokenReleasePercentage: 10,
+            immediateTokenReleasePercentage: 10,
             vestingDays: 1800 // 60 months
         });
     }
@@ -188,7 +190,7 @@ contract VestingContract is Ownable {
     * @dev The amount of tokens to buy is calculated by dividing the amount of ETH/USDT sent by the price of the stage
     * @param stage uint256 The stage to buy
     */
-    function buy(uint stage) external payable {
+    function buy(uint stage) external payable nonReentrant {
         require(stage < uint256(Stages.Community), "Invalid stage to buy");
 
         // Check if the stage is open
@@ -209,7 +211,7 @@ contract VestingContract is Ownable {
         require(totalTokenPurchasedOrAllocatedPerStage[stage] + tokensToBuy <= vestingStages[stage].tokenCount, "Not enough tokens available");
 
         // Transfer the immadiate percentage of tokens to the user
-        uint256 immadiateTokenRelease = (tokensToBuy * vestingStages[stage].immadiateTokenReleasePercentage) / 100;
+        uint256 immadiateTokenRelease = (tokensToBuy * vestingStages[stage].immediateTokenReleasePercentage) / 100;
         
         // Update the total tokens purchased
         totalTokenPurchasedOrAllocatedPerStage[stage] += tokensToBuy;
@@ -245,8 +247,8 @@ contract VestingContract is Ownable {
         // Transfer the immadiate percentage of tokens to the user
         uint256 immadiateTokenRelease = 0;
 
-        if(vestingStages[stage].immadiateTokenReleasePercentage > 0) {
-            immadiateTokenRelease = (amount * vestingStages[stage].immadiateTokenReleasePercentage) / 100;
+        if(vestingStages[stage].immediateTokenReleasePercentage > 0) {
+            immadiateTokenRelease = (amount * vestingStages[stage].immediateTokenReleasePercentage) / 100;
             _pmoToken.transfer(user, immadiateTokenRelease);
         }
 
@@ -261,7 +263,7 @@ contract VestingContract is Ownable {
     * @dev Claim tokens for a stage
     * @param stage uint256 The stage to claim the tokens
     */
-    function claimTokens(uint stage) external {
+    function claimTokens(uint stage) external nonReentrant{
         require(stage <= uint256(Stages.GeoExpansionReserves), "Invalid stage");
 
         // check if user has balance

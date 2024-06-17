@@ -40,7 +40,7 @@ contract('MockedVesting', async () => {
         //! Check if the allocation is successful
         // get the stage settings
         const stage = await vestingContract.vestingStages(testStage);
-        const expectedBalance = 1000 - (1000 * stage.immadiateTokenReleasePercentage / 100);
+        const expectedBalance = 1000 - (1000 * stage.immediateTokenReleasePercentage / 100);
         assert.equal(balance, expectedBalance * 10 ** 18);
     });
 
@@ -48,7 +48,7 @@ contract('MockedVesting', async () => {
         const pmoBalance = await pmo.balanceOf(testAccount1);
 
         const stage = await vestingContract.vestingStages(testStage);
-        const expectedBalance = 1000 * stage.immadiateTokenReleasePercentage / 100;
+        const expectedBalance = 1000 * stage.immediateTokenReleasePercentage / 100;
         assert.equal(pmoBalance, expectedBalance * 10 ** 18);
     });
 
@@ -80,7 +80,7 @@ contract('MockedVesting', async () => {
         const vestingDays = stage.vestingDays;
 
         // number of tokens to be claimed
-        const allocatedBalance = 1000 - (1000 * stage.immadiateTokenReleasePercentage / 100);
+        const allocatedBalance = 1000 - (1000 * stage.immediateTokenReleasePercentage / 100);
         // calculate the claimable tokens
         const x = allocatedBalance / vestingDays;
 
@@ -103,7 +103,7 @@ contract('MockedVesting', async () => {
         const vestingDays = stage.vestingDays;
 
         // number of tokens to be claimed
-        const allocatedBalance = 1000 - (1000 * stage.immadiateTokenReleasePercentage / 100);
+        const allocatedBalance = 1000 - (1000 * stage.immediateTokenReleasePercentage / 100);
         // calculate the claimable tokens
         const x = allocatedBalance / vestingDays * 26;
 
@@ -124,7 +124,7 @@ contract('MockedVesting', async () => {
         const stage = await vestingContract.vestingStages(testStage);
 
         // number of tokens to be claimed
-        const allocatedBalance = 1000 - (1000 * stage.immadiateTokenReleasePercentage / 100);
+        const allocatedBalance = 1000 - (1000 * stage.immediateTokenReleasePercentage / 100);
         // calculate the claimable tokens
         const x = allocatedBalance / stage.vestingDays * 386;
 
@@ -136,7 +136,7 @@ contract('MockedVesting', async () => {
         const stage = await vestingContract.vestingStages(testStage);
         
         //! This is the amount user received immadiately after allocation
-        const immadiateClaim = (1000 * 10 ** 18) * stage.immadiateTokenReleasePercentage / 100;
+        const immadiateClaim = (1000 * 10 ** 18) * stage.immediateTokenReleasePercentage / 100;
 
         // Totalvesting balance = allocation - immadiate transfer
         const vestingBalance = (1000 * 10 ** 18) - immadiateClaim;
